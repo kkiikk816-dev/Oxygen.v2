@@ -17,17 +17,21 @@ async function checkSession() {
 }
 
 async function verifyUserRole(user) {
+    // فحص هل المستخدم أدمن؟
     const { data: admin } = await sb.from('admin_list').select('email').eq('email', user.email).maybeSingle();
 
     if (admin) {
         currentUserRole = 'admin';
-        document.getElementById('adm-btn').style.display = 'flex';
+        document.getElementById('adm-btn').style.display = 'flex'; // إظهار زر الأدمن
     } else {
         currentUserRole = 'student';
         document.getElementById('adm-btn').style.display = 'none';
     }
 
+    // حفظ الرتبة للمرجعية السريعة (تجميلي فقط)
     localStorage.setItem('ox_role', currentUserRole);
+
+    // إخفاء شاشة الدخول وبدء التطبيق
     document.getElementById('auth-screen').style.display = 'none';
     loadApp();
 }
@@ -56,13 +60,16 @@ async function handleAuth() {
 
     try {
         if (isLoginMode) {
+            // تسجيل الدخول
             const { data, error } = await sb.auth.signInWithPassword({ email, password });
             if (error) throw error;
             await verifyUserRole(data.user);
         } else {
+            // إنشاء حساب
             const { data, error } = await sb.auth.signUp({ email, password });
             if (error) throw error;
 
+            // إضافة الطالب لجدول الطلاب تلقائياً (Secure)
             if (data.user) {
                 await sb.from('students').insert([{ id: data.user.id, email: data.user.email }]);
                 showMsg("تم إنشاء الحساب! جاري الدخول...", "success");
@@ -91,6 +98,8 @@ async function logoutApp() {
 }
 
 // --- 3. منطق التطبيق (Content) ---
+
+// البيانات الثابتة (القاموس، المهارات، النصائح)
 const medicalLibrary = [
     { t: "Bradycardia", ar: "بطء نبضات القلب", c: "term" }, { t: "Tachycardia", ar: "تسارع نبضات القلب", c: "term" },
     { t: "Hypertension", ar: "ارتفاع ضغط الدم", c: "term" }, { t: "Hypotension", ar: "انخفاض ضغط الدم", c: "term" },
@@ -113,7 +122,7 @@ const tips = [
 let store = { ads: [], sch: [], docs: [] };
 
 window.onload = () => {
-    checkSession();
+    checkSession(); // بدء التحقق من الحماية
     setupPWA();
     document.getElementById('today-date').innerText = new Date().toLocaleDateString('ar-EG', {weekday:'long', day:'numeric', month:'long'});
     document.getElementById('user-note').value = localStorage.getItem('ox_note') || "";
@@ -192,6 +201,7 @@ function filterLib(c) {
         </div>`).join('');
 }
 
+// --- Study Buddy ---
 async function submitStudyRequest() {
     const p = {
         subject: document.getElementById('st-subject').value,
@@ -230,6 +240,7 @@ async function approveStudy(id) {
     alert("تمت الموافقة"); buildAdminForm();
 }
 
+// --- Quiz ---
 async function loadDailyQuiz() {
     const { data } = await sb.from('daily_quiz').select('*').order('created_at', { ascending: false }).limit(1);
     if (data && data.length) {
@@ -251,6 +262,7 @@ function checkQ(ch, cor, exp) {
     res.innerHTML = (ch === cor) ? `<span style="color:var(--success)">✅ صحيح!</span><br>${exp}` : `<span style="color:var(--danger)">❌ خطأ (الجواب ${cor.toUpperCase()})</span><br>${exp}`;
 }
 
+// --- Tools ---
 function initSkills() {
     document.getElementById('skills-list').innerHTML = masterSkills.map(s => {
         const isDone = localStorage.getItem(`skill_${s.id}`) === 'true';
@@ -292,6 +304,7 @@ function searchDict() {
     res.innerHTML = f.map(i => `<div style="padding:10px; border-bottom:1px solid #334155;"><b>${i.t}</b>: ${i.ar}</div>`).join('');
 }
 
+// --- Admin ---
 async function buildAdminForm() {
     const t = document.getElementById('adm-choice').value;
     const area = document.getElementById('adm-inputs');
@@ -302,13 +315,42 @@ async function buildAdminForm() {
     else if(t === 'schedule') area.innerHTML = `<select id="f-day" class="inset-input"><option>الأحد</option><option>الأثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option></select><input id="f-sub" class="inset-input" placeholder="مادة"><input id="f-time" class="inset-input" placeholder="وقت"><input id="f-hall" class="inset-input" placeholder="قاعة">`;
     else if(t === 'lectures') area.innerHTML = `<input id="f-type" class="inset-input" placeholder="نوع"><input id="f-title" class="inset-input" placeholder="عنوان"><input id="f-link" class="inset-input" placeholder="رابط">`;
     else if(t === 'quiz') area.innerHTML = `<input id="q-quest" class="inset-input" placeholder="سؤال"><input id="q-a" class="inset-input" placeholder="A"><input id="q-b" class="inset-input" placeholder="B"><input id="q-c" class="inset-input" placeholder="C"><select id="q-correct" class="inset-input"><option value="a">A</option><option value="b">B</option><option value="c">C</option></select><textarea id="q-expl" class="inset-input" placeholder="شرح"></textarea>`;
+
+    // --- التعديل الجديد والمطلوب لـ Study Buddy ---
     else if(t === 'study_admin') {
         pubBtn.style.display = 'none';
         const { data: pending } = await sb.from('study_requests').select('*').eq('is_approved', false);
-        const { data: offers } = await sb.from('study_offers').select('*, study_requests(subject, tele_user)');
+        const { data: offers } = await sb.from('study_offers').select('*, study_requests(subject, gender, tele_user, details)');
+
         area.innerHTML = `
-            <h4 style="color:var(--gold)">قيد الانتظار:</h4>${pending?.map(p => `<div>${p.subject} (${p.tele_user}) <button onclick="approveStudy(${p.id})">✅</button></div>`).join('')||'لا يوجد'}
-            <h4 style="color:var(--accent)">عروض المساعدة:</h4>${offers?.map(o => `<div>${o.helper_tele} يساعد ${o.study_requests?.tele_user}</div>`).join('')||'لا يوجد'}
+            <h4 style="color:var(--gold); margin-bottom: 10px;">📥 طلبات قيد الانتظار:</h4>
+            ${pending?.length ? pending.map(p => `
+                <div class="neu-card" style="border-right:3px solid var(--gold); font-size:0.9rem;">
+                    <b>المادة: ${p.subject}</b> <br>
+                    <span style="opacity:0.8;">المستخدم: @${p.tele_user}</span>
+                    <button class="badge" style="display:block; margin-top:10px; border:none; background:var(--success); color:white; cursor:pointer;" onclick="approveStudy(${p.id})">موافقة ✅</button>
+                </div>
+            `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد طلبات جديدة</p>'}
+
+            <h4 style="color:var(--accent); margin-top:20px; margin-bottom: 10px;">🤝 عروض المساعدة المكتملة:</h4>
+            ${offers?.length ? offers.map(o => `
+                <div class="neu-card" style="border-right:3px solid var(--accent); background: rgba(56, 189, 248, 0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <b style="color:var(--accent)">تفاصيل المساعدة:</b>
+                        <span class="badge">${o.study_requests?.gender || 'غير محدد'}</span>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.9rem; line-height:1.6;">
+                        <div><strong>📚 المادة:</strong> ${o.study_requests?.subject}</div>
+                        <div><strong>📝 التفاصيل:</strong> ${o.study_requests?.details}</div>
+                        <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <div style="color:var(--gold)"><strong>👤 صاحب الطلب:</strong> @${o.study_requests?.tele_user}</div>
+                            <div style="color:var(--success)"><strong>🙋‍♂️ مقدم المساعدة:</strong> @${o.helper_tele}</div>
+                        </div>
+                    </div>
+                    <button class="badge" style="margin-top:12px; border:none; background:var(--danger); color:white; width:100%; cursor:pointer; padding:8px;" onclick="delData('study_offers', ${o.id})">حذف العرض 🗑️</button>
+                </div>
+            `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد عروض مساعدة حالياً</p>'}
         `;
     }
 }
@@ -334,3 +376,94 @@ function setupPWA() {
     const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
     document.head.appendChild(link);
 }
+// للملاحظات
+function addNote() {
+    const txt = prompt("اكتب ملاحظتك:");
+    if(!txt) return;
+    let notes = JSON.parse(localStorage.getItem('ox_notes') || '[]');
+    notes.push(txt);
+    localStorage.setItem('ox_notes', JSON.stringify(notes));
+    renderNotes();
+}
+
+function renderNotes() {
+    const notes = JSON.parse(localStorage.getItem('ox_notes') || '[]');
+    document.getElementById('notes-container').innerHTML = notes.map((n, i) => `
+        <div style="background:#0f172a; padding:10px; border-radius:10px; font-size:0.8rem; position:relative;">
+            ${n}
+            <i class="fas fa-times" onclick="delNote(${i})" style="position:absolute; top:5px; left:5px; color:var(--danger); font-size:0.6rem;"></i>
+        </div>
+    `).join('');
+}
+
+
+
+// 1. مصفوفة الاختصارات المحدثة
+const medicalData = [
+    { short: "S/S", full: "Signs & Symptoms", arabic: "علامات وأعراض" },
+    { short: "CBC", full: "Complete Blood Count", arabic: "فحص دم كامل" },
+    { short: "Hb", full: "Hemoglobin", arabic: "هيموغلوبين" },
+    { short: "ECG / EKG", full: "Electrocardiogram", arabic: "تخطيط القلب" },
+    { short: "CXR", full: "Chest X-ray", arabic: "أشعة صدر" },
+    { short: "MRI", full: "Magnetic Resonance Imaging", arabic: "رنين مغناطيسي" },
+    { short: "ICU", full: "Intensive Care Unit", arabic: "العناية المركزة" },
+    { short: "ER", full: "Emergency Room", arabic: "غرفة الطوارئ" },
+    { short: "UTI", full: "Urinary Tract Infection", arabic: "التهاب المسالك" },
+    { short: "DM", full: "Diabetes Mellitus", arabic: "مرض السكري" },
+    { short: "HTN", full: "Hypertension", arabic: "ارتفاع الضغط" },
+    { short: "COPD", full: "Chronic Obstructive Pulmonary Disease", arabic: "انسداد رئوي" },
+    { short: "SOB", full: "Shortness of Breath", arabic: "ضيق نفس" },
+    { short: "N/V", full: "Nausea & Vomiting", arabic: "غثيان وقيء" },
+    { short: "I/O", full: "Intake & Output", arabic: "الداخل والخارج" },
+    { short: "HR", full: "Heart Rate", arabic: "نبض القلب" },
+    { short: "RR", full: "Respiratory Rate", arabic: "معدل التنفس" },
+    { short: "BP", full: "Blood Pressure", arabic: "ضغط الدم" },
+    { short: "Temp/T", full: "Temperature", arabic: "درجة الحرارة" },
+    { short: "SpO2", full: "Oxygen Saturation", arabic: "تشبع الاكسجين في الدم" },
+    { short: "IV", full: "Intravenous", arabic: "وريدي" },
+    { short: "PO", full: "Per Oral", arabic: "بواسطة الفم" }
+];
+
+// 2. مصفوفة الرموز الطبية
+const medicalSymbols = [
+    { sym: "↑", eng: "Increase", ara: "ارتفاع" },
+    { sym: "↓", eng: "Decrease", ara: "انخفاض" },
+    { sym: "<", eng: "Less than", ara: "أقل من" },
+    { sym: ">", eng: "Greater than", ara: "أكبر من" }
+];
+
+// 3. دالة تعبئة البيانات
+function loadMedicalAbbrev() {
+    // تعبئة الجدول
+    const tableBody = document.getElementById('abbrev-table-body');
+    if(tableBody) {
+        tableBody.innerHTML = medicalData.map(item => `
+            <tr>
+                <td style="color:var(--accent); font-weight:bold;">${item.short}</td>
+                <td style="font-style:italic; opacity:0.7; font-size:0.7rem;">${item.full}</td>
+                <td style="font-size:0.8rem;">${item.arabic}</td>
+            </tr>
+        `).join('');
+    }
+
+    // تعبئة الرموز
+    const symContainer = document.getElementById('symbols-container');
+    if(symContainer) {
+        symContainer.innerHTML = medicalSymbols.map(s => `
+            <div style="background:rgba(255,255,255,0.03); padding:10px; border-radius:10px; text-align:center; border:1px solid rgba(251,191,36,0.2);">
+                <div style="font-size:1.5rem; color:#fbbf24; font-weight:bold;">${s.sym}</div>
+                <div style="font-size:1rem; opacity:1;">${s.eng}</div>
+                <div style="font-size:0.8rem; margin-top:3px;">${s.ara}</div>
+            </div>
+        `).join('');
+    }
+}
+
+// 4. ربط الدالة بفتح الصفحة (تأكد من تعديل دالة nav الأصلية)
+const oldNav = nav;
+nav = function(pageId) {
+    oldNav(pageId);
+    if(pageId === 'p-abbrev') {
+        loadMedicalAbbrev();
+    }
+};
