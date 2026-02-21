@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -106,6 +106,15 @@
 </div>
 
 <div id="p-notes" class="page">
+  <div class="neu-card" style="border-top: 3px solid var(--gold);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0;"><i class="fas fa-sticky-note" style="color:var(--gold);"></i> مفكرة أوكسجين</h4>
+          <button onclick="addNote()" style="background:none; border:none; color:var(--accent); font-size:1.2rem;"><i class="fas fa-plus-circle"></i></button>
+      </div>
+      <div id="notes-container" style="margin-top:15px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          </div>
+  </div>
+
     <div class="neu-card">
         <h3><i class="fas fa-sticky-note"></i> دفتر ملاحظاتك</h3>
         <textarea id="user-note" class="inset-input" style="height:200px; resize:none;" placeholder="ملاحظاتك الشخصية..."></textarea>
@@ -168,6 +177,34 @@
         </a>
     </div>
 </div>
+    <div id="p-abbrev" class="page">
+        <div class="neu-card" style="padding: 10px; overflow-x: auto; border-top: 4px solid var(--accent);">
+            <h3 style="text-align:center; color:var(--accent); margin-bottom:15px;">
+                <i class="fas fa-file-medical-alt"></i> قاموس الاختصارات الطبية
+            </h3>
+            <table class="medical-table">
+                <thead>
+                    <tr>
+                        <th>المختصر</th>
+                        <th>الكلمة كاملة</th>
+                        <th>المعنى بالعربي</th>
+                    </tr>
+                </thead>
+                <tbody id="abbrev-table-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="neu-card" style="margin-top: 15px; border-top: 4px solid #fbbf24;">
+            <h3 style="text-align:center; color:#fbbf24; margin-bottom:15px;">
+                <i class="fas fa-microchip"></i> الرموز الرياضية الطبية
+            </h3>
+            <div id="symbols-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                </div>
+        </div>
+    </div>
+
+
 
 <div id="p-admin" class="page">
     <div class="neu-card">
@@ -185,12 +222,29 @@
 </div>
 
 <nav class="bottom-nav">
-    <div class="nav-item active" onclick="nav('p-home')"><i class="fas fa-home fa-lg"></i><div>الرئيسية</div></div>
-    <div class="nav-item" onclick="nav('p-study')"><i class="fas fa-user-friends fa-lg" style="color:#8b5cf6;"></i><div>Study</div></div>
-    <div class="nav-item" onclick="nav('p-tools')"><i class="fas fa-briefcase-medical fa-lg"></i><div>الأدوات</div></div>
-    <div class="nav-item" onclick="nav('p-skills')"><i class="fas fa-tasks fa-lg"></i><div>مهاراتي</div></div>
-</nav>
+    <div class="nav-item active" onclick="nav('p-home')">
+        <i class="fas fa-home fa-lg"></i>
+        <div>الرئيسية</div>
+    </div>
 
+    <div class="nav-item" onclick="nav('p-abbrev')">
+        <i class="fas fa-file-medical-alt fa-lg"></i>
+        <div>اختصارات</div>
+    </div>
+
+    <div class="nav-item" onclick="nav('p-study')">
+        <i class="fas fa-user-friends fa-lg" style="color:#8b5cf6;"></i>
+        <div>Study</div>
+    </div>
+
+    <div class="nav-item" onclick="nav('p-tools')">
+        <i class="fas fa-briefcase-medical fa-lg"></i>
+        <div>الأدوات</div>
+    </div>
+
+    <div class="nav-item" onclick="nav('p-skills')">
+        <i class="fas fa-tasks fa-lg"></i>
+        <div>مهاراتي</div>
+    </div>
+</nav>
 <script src="script.js"></script>
-</body>
-</html>

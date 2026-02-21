@@ -111,3 +111,29 @@ body {
 .nav-item.active { color: var(--accent); transform: translateY(-3px); }
 
 .badge { font-size: 0.6rem; padding: 3px 6px; border-radius: 5px; background: var(--accent); color: #000; font-weight: bold; }
+
+.medical-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.medical-table th {
+  background-color: var(--accent);
+  color: #000;
+  padding: 12px 8px;
+  border-radius: 5px;
+}
+
+.medical-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+/* لون مختلف لكل سطر لسهولة القراءة */
+.medical-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
