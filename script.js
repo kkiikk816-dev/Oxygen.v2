@@ -98,23 +98,49 @@ async function logoutApp() {
 
 // البيانات الثابتة (القاموس، المهارات، النصائح)
 const medicalLibrary = [
-    { t: "Bradycardia", ar: "بطء نبضات القلب", c: "term" }, { t: "Tachycardia", ar: "تسارع نبضات القلب", c: "term" },
-    { t: "Hypertension", ar: "ارتفاع ضغط الدم", c: "term" }, { t: "Hypotension", ar: "انخفاض ضغط الدم", c: "term" },
-    { t: "Gastritis", ar: "التهاب المعدة", c: "Suffix-itis" }, { t: "Phlebitis", ar: "التهاب الوريد", c: "Suffix-itis" },
-    { t: "Cyanosis", ar: "ازرقاق الجلد", c: "Color" }, { t: "NPO", ar: "لا شيء عن طريق الفم", c: "Abbr" }
+    { t: "Atherosclerosis", ar: "تصلب الشرايين (تراكم الدهون)", c: "Pathology" },
+    { t: "Myocardial Infarction", ar: "احتشاء عضلة القلب (نوبة قلبية)", c: "Emergency" },
+    { t: "Angina Pectoris", ar: "الذبحة الصدرية (ألم نقص التروية)", c: "Symptom" },
+    { t: "Dyspnea", ar: "ضيق التنفس", c: "Symptom" },
+    { t: "Cyanosis", ar: "الزُراق (تلون الجلد للأزرق)", c: "Sign" },
+    { t: "Tachycardia", ar: "تسرع القلب", c: "Vital Sign" },
+    { t: "Bradycardia", ar: "بطء القلب", c: "Vital Sign" },
+    { t: "Edema", ar: "الوذمة (تراكم السوائل)", c: "Sign" },
+    { t: "Hypoglycemia", ar: "انخفاض سكر الدم", c: "Condition" },
+    { t: "Orthopnea", ar: "صعوبة التنفس عند الاستلقاء", c: "Symptom" },
+    { t: "Cardiomegaly", ar: "تضخم القلب", c: "Pathology" },
+    { t: "Ischemia", ar: "نقص التروية الدموية", c: "Pathology" },
+    { t: "Arrhythmia", ar: "اضطراب نظم القلب", c: "Condition" },
+    { t: "Hemoglobin", ar: "الهيموجلوبين (ناقل الأكسجين)", c: "Lab" },
+    { t: "Hepatitis", ar: "التهاب الكبد", c: "Suffix-itis" },
+    { t: "Neuropathy", ar: "اعتلال الأعصاب", c: "Suffix-pathy" },
+    { t: "Thrombus", ar: "خثرة دموية (جلطة)", c: "Pathology" },
+    { t: "Anemia", ar: "فقر الدم", c: "Condition" },
+    { t: "Defibrillation", ar: "إزالة الرجفان (صدمة كهربائية)", c: "Procedure" },
+    { t: "Hyperthermia", ar: "فرط الحرارة (ارتفاع شديد)", c: "Vital Sign" }
 ];
 
 const masterSkills = [
-    { id: 1, name: "المراقبة القلبية (ECG)", desc: "وضع الأقطاب ومراقبة النظم." },
-    { id: 2, name: "مقياس غلاسكو (GCS)", desc: "تقييم مستوى الوعي." },
-    { id: 3, name: "الإنعاش القلبي (CPR)", desc: "الضغطات الصدرية والتنفس." },
-    { id: 4, name: "سحب الدم (Cannula)", desc: "تركيب الكانيولا وسحب الدم." }
+    { id: 1, name: "المراقبة القلبية (ECG)", desc: "وضع الأقطاب وتحديد اضطرابات النظم الخطرة." },
+    { id: 2, name: "تقييم الوعي (GCS/AVPU)", desc: "حساب مقياس غلاسكو للكشف عن التدهور العصبي." },
+    { id: 3, name: "الإنعاش القلبي (CPR)", desc: "الضغطات الصدرية واستخدام جهاز مزيل الرجفان." },
+    { id: 4, name: "علاج الأكسجين (Oxygen)", desc: "ضبط الأجهزة ومراقبة التشبع (SpO2 > 94%)." },
+    { id: 5, name: "التدخلات الدوائية (IV)", desc: "برمجة المضخات وتطبيق بروتوكول MONA للطوارئ." },
+    { id: 6, name: "الوضعيات العلاجية", desc: "شبه فاولر للتنفس، والجانبي لحماية المجرى الهوائي." },
+    { id: 7, name: "سحب الدم (Phlebotomy)", desc: "سحب العينات بتقنية التعقيم للتحاليل المخبرية." },
+    { id: 8, name: "موازنة السوائل (Fluid Balance)", desc: "حساب المدخول والمطروح وتقييم الوذمة." },
+    { id: 9, name: "العلامات الحيوية (Vitals)", desc: "قياس الضغط، النبض، الحرارة، والتنفس بدقة." },
+    { id: 10, name: "نقل الدم (Blood Transfusion)", desc: "المراقبة الدقيقة للمضاعفات أثناء النقل." }
 ];
 
 const tips = [
-    { main: "قاعدة الـ 5 rights", full: "المريض، الدواء، الجرعة، الوقت، الطريقة الصحيحة." },
-    { main: "علامات الصدمة", full: "هبوط ضغط، تسرع قلب، شحوب، قلة بول." }
+    { main: "بروتوكول MONA", full: "لاحتشاء القلب: مورفين، أكسجين، نتروجليسرين، أسبيرين." },
+    { main: "معيار الخطر في GCS", full: "الدرجة 8 أو أقل تعني حالة حرجة (غيبوبة) وتتطلب تدخلاً." },
+    { main: "ضغطات CPR", full: "البالغين: يدين، الأطفال: يد واحدة، الرضع: إصبعين." },
+    { main: "هدف الأكسجين SpO2", full: "يجب الحفاظ عليه فوق 94%، وضعية شبه فاولر تساعد الرئة." },
+    { main: "الوضع الجانبي", full: "أفضل وضع لفاقدي الوعي لمنع انسداد مجرى الهواء والشرقة." }
 ];
+
 
 let store = { ads: [], sch: [], docs: [] };
 
