@@ -8,190 +8,214 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="auth-screen">
-    <img src="https://i.postimg.cc/CL52rzVc/a2043f1739b2da955eba5a2c1bbd0bb3.jpg" class="auth-logo">
-    <h2 id="auth-title" style="margin:0 0 5px;">أوكسجين التمريض</h2>
-    <p id="auth-sub" style="opacity:0.6; margin:0 0 25px; font-size:0.9rem;">سجل دخولك للوصول للمحتوى</p>
-
-    <input type="email" id="email" class="auth-input" placeholder="البريد الإلكتروني">
-    <input type="password" id="password" class="auth-input" placeholder="كلمة المرور (6 أحرف أو أكثر)">
-
-    <button id="main-auth-btn" class="btn-auth btn-primary" onclick="handleAuth()">تسجيل الدخول</button>
-    <button id="toggle-auth-btn" class="btn-auth btn-outline" onclick="toggleAuthMode()">ليس لديك حساب؟ إنشاء حساب جديد</button>
-
-    <div id="auth-msg" class="status-msg"></div>
-</div>
-
-<div class="app-bar">
-    <div onclick="toggleMenu()"><i class="fas fa-align-right fa-lg"></i></div>
-    <div style="font-weight:800; font-size:1.2rem; color:var(--accent);">OXYGEN</div>
-    <div onclick="logoutApp()" style="color:var(--danger)"><i class="fas fa-power-off fa-lg"></i></div>
-</div>
-
-<div class="side-menu" id="side-menu">
-    <div style="display:flex; justify-content:space-between; margin-bottom:25px; border-bottom:1px solid var(--border); padding-bottom:15px;">
-        <h3 style="margin:0; color:var(--accent);">القائمة</h3>
-        <div onclick="toggleMenu()"><i class="fas fa-times fa-lg"></i></div>
-    </div>
-    <div class="menu-item" onclick="nav('p-home')"><i class="fas fa-th-large"></i> الرئيسية</div>
-    <div class="menu-item" onclick="nav('p-ads')"><i class="fas fa-bullhorn"></i> التبليغات العامة</div>
-    <div class="menu-item" onclick="nav('p-study')"><i class="fas fa-user-friends"></i> Study Buddy</div>
-    <div class="menu-item" onclick="nav('p-library')"><i class="fas fa-book-medical"></i> المكتبة والملفات</div>
-    <div class="menu-item" onclick="nav('p-notes')"><i class="fas fa-pen-nib"></i> ملاحظاتي الشخصية</div>
-    <div class="menu-item" onclick="nav('p-links')"><i class="fas fa-link"></i> روابط التواصل</div>
-    <div id="adm-btn" style="display:none; border:1px solid var(--gold);" class="menu-item" onclick="nav('p-admin')">
-        <i class="fas fa-user-shield" style="color:var(--gold);"></i> لوحة التحكم
-    </div>
-</div>
-
-<div id="p-home" class="page active">
-    <div class="welcome-banner">
-        <div style="z-index:2; position:relative;">
-            <div style="font-size:1.2rem; font-weight:700;">هلا بيك ممرضنا.. 🤍</div>
-            <div id="today-date" style="font-size:0.8rem; opacity:0.9; margin-top:5px;"></div>
-        </div>
-        <i class="fas fa-lungs fa-5x" style="position:absolute; right:-10px; bottom:-10px; opacity:0.1;"></i>
-    </div>
-
-    <div class="neu-card" style="border-right: 5px solid var(--gold);">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b style="color:var(--gold);"><i class="fas fa-star"></i> معلومة سريعة</b>
-            <button class="badge" style="border:none; cursor:pointer;" onclick="toggleBox('tip-details')">📖 شرح</button>
-        </div>
-        <p id="tip-main" style="margin:12px 0; font-weight:600; font-size:0.95rem;"></p>
-        <div id="tip-details" style="display:none; padding-top:10px; border-top:1px solid #334155; font-size:0.85rem; color:#94a3b8;"></div>
-    </div>
-
-    <div id="quiz-container" class="neu-card" style="border-left: 5px solid var(--accent); display:none;">
-        <b style="color:var(--accent);"><i class="fas fa-question-circle"></i> سؤال اليوم</b>
-        <p id="q-text" style="font-weight:600; margin: 15px 0; font-size: 1rem;"></p>
-        <div id="q-options" style="display:grid; gap:10px;"></div>
-        <div id="q-res" style="margin-top:10px; display:none; padding:10px; background:#020617; border-radius:8px;"></div>
-    </div>
-
-    <h4 style="margin:20px 0 10px; padding-right:5px;">📅 جدول المحاضرات الأسبوعي</h4>
-    <div id="sch-horizontal" class="horizontal-scroll"></div>
-</div>
-
-<div id="p-ads" class="page">
-    <h3 style="margin-right:5px;"><i class="fas fa-bell"></i> التبليغات والتعميمات</h3>
-    <div id="ads-list"></div>
-</div>
-
-<div id="p-study" class="page">
-    <div class="welcome-banner" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
-        <h3><i class="fas fa-user-friends"></i> Study Buddy</h3>
-        <p style="font-size: 0.8rem; opacity: 0.9;">ليش تدرس وحدك ابحث عن زميل يشرح لك مادة أو ساعد زملائك.</p>
-        <button class="btn-main" style="background:white; color:#6d28d9; font-size:0.8rem; padding:8px;" onclick="toggleBox('study-form-box')">اطلب مساعدة الآن</button>
-    </div>
-    <div id="study-form-box" class="neu-card" style="display:none; border:1px solid #8b5cf6;">
-        <h4>طلب مساعدة جديدة</h4>
-        <input id="st-subject" class="inset-input" placeholder="المادة (مثلاً: التشريح)">
-        <select id="st-gender" class="inset-input"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
-        <input id="st-tele" class="inset-input" placeholder="يوزرك عالتليجرام">
-        <textarea id="st-details" class="inset-input" placeholder="تفاصيل الطلب..."></textarea>
-        <button class="btn-main" style="background:#8b5cf6; color:white;" onclick="submitStudyRequest()">إرسال 🚀</button>
-    </div>
-    <div id="study-list-container"></div>
-</div>
-
-<div id="p-library" class="page">
-    <div id="lib-cats" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px;"></div>
-    <div id="lib-files" style="margin-top:10px;"></div>
-</div>
-
-<div id="p-notes" class="page">
-  <div class="neu-card" style="border-top: 3px solid var(--gold);">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h4 style="margin:0;"><i class="fas fa-sticky-note" style="color:var(--gold);"></i> مفكرة أوكسجين</h4>
-          <button onclick="addNote()" style="background:none; border:none; color:var(--accent); font-size:1.2rem;"><i class="fas fa-plus-circle"></i></button>
-      </div>
-      <div id="notes-container" style="margin-top:15px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          </div>
-  </div>
-
-    <div class="neu-card">
-        <h3><i class="fas fa-sticky-note"></i> دفتر ملاحظاتك</h3>
-        <textarea id="user-note" class="inset-input" style="height:200px; resize:none;" placeholder="ملاحظاتك الشخصية..."></textarea>
-    </div>
-</div>
-
-<div id="p-tools" class="page">
-    <div class="neu-card">
-        <h3 style="color:var(--accent);">🩺 حاسبة السعي</h3>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="number" id="mid-theory" class="inset-input" placeholder="نظري">
-            <input type="number" id="mid-prac" class="inset-input" placeholder="عملي">
-        </div>
-        <input type="number" id="mid-daily" class="inset-input" placeholder="نشاط/يومي">
-        <button class="btn-main" onclick="calcOxygen()">احسب</button>
-        <div id="calc-msg" style="margin-top:10px; display:none; padding:10px; background:#020617; border-radius:8px;"></div>
-    </div>
-    <div class="neu-card">
-        <h3>🔍 القاموس</h3>
-        <input type="text" id="dict-search" class="inset-input" placeholder="بحث..." oninput="searchDict()">
-        <div id="dict-results" style="max-height: 300px; overflow-y: auto;"></div>
-    </div>
-</div>
-
-<div id="p-skills" class="page">
-    <div class="neu-card" style="background:var(--accent); color:#000;">
-        <h2 style="margin:0;">تحصيلك العملي</h2>
-        <div style="font-size:1.5rem; font-weight:bold;" id="skill-pct">0%</div>
-        <div style="width:100%; height:8px; background:rgba(0,0,0,0.2); border-radius:10px; margin-top:10px;">
-            <div id="skill-bar" style="width:0%; height:100%; background:#fff; border-radius:10px; transition:0.5s;"></div>
+    <div id="intro-screen">
+        <div class="intro-content">
+            <h1 id="intro-text"></h1>
         </div>
     </div>
-    <div id="skills-list"></div>
-</div>
 
-<div id="p-links" class="page">
-    <div class="neu-card">
-        <h4>🔗 روابط مهمة</h4>
-        <a href="https://t.me/+qlol3SKFZpk0ZDli" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> قناة الدفعة الرسمية
-        </a>
-        <a href="https://t.me/+5gRfqqpnkzwzODJi" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> جروب الاحياء (الرسمي)
-        </a>
-        <a href="https://t.me/alialakbar2005" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> قناة الملفات
-        </a>
+    <div id="auth-screen">
+        <img src="https://i.postimg.cc/CL52rzVc/a2043f1739b2da955eba5a2c1bbd0bb3.jpg" class="auth-logo">
+        <h2 id="auth-title" style="margin:0 0 5px;">أوكسجين التمريض</h2>
+        <p id="auth-sub" style="opacity:0.6; margin:0 0 25px; font-size:0.9rem;">سجل دخولك للوصول للمحتوى</p>
+
+        <input type="email" id="email" class="auth-input" placeholder="البريد الإلكتروني">
+        <input type="password" id="password" class="auth-input" placeholder="كلمة المرور (6 أحرف أو أكثر)">
+
+        <div class="auth-actions" style="width: 100%; display: grid; gap: 12px; margin-top: 20px; justify-items: center;">
+            <button id="main-auth-btn" class="btn-main" onclick="handleAuth()" style="background: var(--accent); color: #0f172a; font-weight: 800; max-width: 350px;">
+                <i class="fas fa-sign-in-alt" style="margin-left: 8px;"></i>
+                <span>تسجيل الدخول</span>
+            </button>
+
+            <button id="toggle-auth-btn" class="btn-main" onclick="toggleAuthMode()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); font-size: 0.85rem; max-width: 350px;">
+                <i class="fas fa-user-plus" style="margin-left: 8px;"></i>
+                <span id="toggle-text">ليس لديك حساب؟ إنشاء حساب جديد</span>
+            </button>
+
+            <div id="auth-msg" class="status-msg" style="text-align: center; font-size: 0.8rem; min-height: 20px; max-width: 350px;"></div>
+        </div>
     </div>
 
-    <div class="neu-card">
-        <h4>🔗 الإدارة</h4>
-        <a href="https://t.me/ms0oll" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> مصطفى جبار (المطور)
-        </a>
-        <a href="https://t.me/txt7l" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> مجتبى مالك (الممثل)
-        </a>
-        <a href="https://t.me/QG_491" class="menu-item" style="text-decoration:none;">
-            <i class="fab fa-telegram"></i> مجتبى حازم
-        </a>
+    <div class="app-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000;">
+        <div onclick="toggleMenu()" style="cursor: pointer; width: 40px;">
+            <i class="fas fa-bars-staggered fa-lg" style="color: var(--txt);"></i>
+        </div>
+
+        <div style="font-weight: 900; font-size: 1.4rem; color: var(--accent); letter-spacing: 1px; font-family: sans-serif;">
+            OXYGEN <span style="font-size: 0.6rem; vertical-align: middle; opacity: 0.5;">NURSING</span>
+        </div>
+
+        <div onclick="logoutApp()" style="color: var(--danger); cursor: pointer; width: 40px; text-align: left;">
+            <i class="fas fa-power-off fa-lg"></i>
+        </div>
     </div>
-</div>
+
+    <div class="side-menu" id="side-menu">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 8px; height: 25px; background: var(--accent); border-radius: 4px;"></div>
+                <h3 style="margin: 0; color: var(--txt); font-weight: 800;">القائمة الرئيسية</h3>
+            </div>
+            <div onclick="toggleMenu()" style="cursor: pointer; opacity: 0.7;">
+                <i class="fas fa-times fa-xl"></i>
+            </div>
+        </div>
+
+        <div class="menu-item" onclick="nav('p-home')"><i class="fas fa-th-large"></i> الرئيسية</div>
+        <div class="menu-item" onclick="nav('p-ads')"><i class="fas fa-bullhorn"></i> التبليغات العامة</div>
+        <div class="menu-item" onclick="nav('p-study')"><i class="fas fa-user-friends"></i> Study Buddy</div>
+        <div class="menu-item" onclick="nav('p-library')"><i class="fas fa-book-medical"></i> المكتبة والملفات</div>
+        <div class="menu-item" onclick="nav('p-notes')"><i class="fas fa-pen-nib"></i> ملاحظاتي الشخصية</div>
+        <div class="menu-item" onclick="nav('p-links')"><i class="fas fa-link"></i> روابط التواصل</div>
+
+        <div id="adm-btn" style="display:none; border:1px solid var(--gold); margin-top:10px;" class="menu-item" onclick="nav('p-admin')">
+            <i class="fas fa-user-shield" style="color:var(--gold);"></i> لوحة التحكم
+        </div>
+    </div>
+
+
+    <div id="p-home" class="page active">
+        <div class="welcome-banner" style="position:relative; overflow:hidden;">
+            <div style="z-index:2; position:relative;">
+                <div style="font-size:1.2rem; font-weight:700;">هلا بيك ممرضنا.. 🤍</div>
+                <div id="today-date" style="font-size:0.8rem; opacity:0.9; margin-top:5px;"></div>
+            </div>
+            <i class="fas fa-lungs fa-5x" style="position:absolute; left:-10px; bottom:-10px; opacity:0.1; transform: rotate(-20deg);"></i>
+        </div>
+
+        <div class="neu-card" style="border-right: 5px solid var(--gold);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:var(--gold);"><i class="fas fa-star"></i> معلومة سريعة</b>
+                <button class="badge" style="border:none; cursor:pointer; background:rgba(251, 191, 36, 0.2); color:var(--gold);" onclick="toggleBox('tip-details')">📖 شرح</button>
+            </div>
+            <p id="tip-main" style="margin:12px 0; font-weight:600; font-size:0.95rem;"></p>
+            <div id="tip-details" style="display:none; padding-top:10px; border-top:1px solid #334155; font-size:0.85rem; color:#94a3b8;"></div>
+        </div>
+
+        <div id="quiz-container" class="neu-card" style="border-left: 5px solid var(--accent); display:none;">
+            <b style="color:var(--accent);"><i class="fas fa-question-circle"></i> سؤال اليوم</b>
+            <p id="q-text" style="font-weight:600; margin: 15px 0; font-size: 1rem;"></p>
+            <div id="q-options" style="display:grid; gap:10px;"></div>
+            <div id="q-res" style="margin-top:10px; display:none; padding:10px; background:#020617; border-radius:8px;"></div>
+        </div>
+
+        <h4 style="margin:20px 0 10px; padding-right:5px;">📅 جدول المحاضرات الأسبوعي</h4>
+        <div id="sch-horizontal" class="horizontal-scroll"></div>
+    </div>
+
+    <div id="p-ads" class="page">
+        <h3 style="margin-right:15px; color: var(--accent);"><i class="fas fa-bell"></i> التبليغات والتعميمات</h3>
+        <div id="ads-list"></div>
+    </div>
+
+    <div id="p-study" class="page">
+        <div class="welcome-banner" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); position:relative; overflow:hidden;">
+            <h3><i class="fas fa-user-friends"></i> Study Buddy</h3>
+            <p style="font-size: 0.8rem; opacity: 0.9; margin-bottom:15px;">ليش تدرس وحدك؟ ابحث عن زميل يشرح لك مادة أو ساعد زملائك.</p>
+            <button class="btn-main" style="background:white; color:#6d28d9; width:auto; padding:8px 20px; font-weight: bold;" onclick="toggleBox('study-form-box')">اطلب مساعدة الآن</button>
+            <i class="fas fa-graduation-cap fa-5x" style="position:absolute; left:-15px; bottom:-15px; opacity:0.1;"></i>
+        </div>
+
+        <div id="study-form-box" class="neu-card" style="display:none; border:2px solid #8b5cf6; margin-top:15px; position:relative;">
+            <h4 style="margin-top:0; color:#8b5cf6;">طلب مساعدة جديدة</h4>
+            <input id="st-name" class="inset-input" placeholder="اسمك الكامل">
+            <input id="st-tele" class="inset-input" placeholder="معرف تليجرامك @example">
+            <input id="st-subject" class="inset-input" placeholder="المادة (مثلاً: التشريح)">
+            <select id="st-gender" class="inset-input">
+                <option value="ذكر">ذكر</option>
+                <option value="أنثى">أنثى</option>
+            </select>
+            <textarea id="st-details" class="inset-input" placeholder="تفاصيل إضافية عن طلبك..." rows="3"></textarea>
+            <button class="btn-main" style="background:#8b5cf6; color:white;" onclick="submitStudyRequest()">إرسال الطلب 🚀</button>
+        </div>
+
+        <div id="study-list-container" style="margin-top:20px;"></div>
+    </div>
+
+    <div id="p-library" class="page">
+        <h3 style="margin-right:10px;"><i class="fas fa-book-medical"></i> المكتبة والملفات</h3>
+        <div id="lib-cats" class="horizontal-scroll"></div>
+        <div id="lib-files" style="margin-top:15px;"></div>
+    </div>
+
+    <div id="p-notes" class="page">
+        <div class="neu-card" style="border-top: 4px solid var(--gold);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0;"><i class="fas fa-sticky-note" style="color:var(--gold);"></i> مفكرة أوكسجين</h4>
+                <button onclick="addNote()" class="badge" style="background:var(--gold); color:#000; border:none; padding:5px 15px; cursor:pointer;">حفظ</button>
+            </div>
+            <textarea id="user-note" class="inset-input" style="height:120px; resize:none;" placeholder="اكتب ملاحظاتك الشخصية هنا..."></textarea>
+            <div id="notes-container" style="margin-top:20px; display:grid; gap:10px;"></div>
+        </div>
+    </div>
+
+    <div id="p-tools" class="page">
+        <div class="grid-2-cols" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="neu-card">
+                <h4 style="color:var(--accent); margin-top:0; font-size: 0.9rem;"><i class="fas fa-calculator"></i> حاسبة السعي</h4>
+                <input type="number" id="mid-theory" class="inset-input" placeholder="نظري(25)">
+                <input type="number" id="mid-prac" class="inset-input" placeholder="عملي(10)">
+                <input type="number" id="mid-daily" class="inset-input" placeholder="يومي(5)">
+                <button class="btn-main" style="height:35px; font-size:0.8rem;" onclick="calcOxygen()">احسب</button>
+                <div id="calc-msg" style="margin-top:10px; display:none; padding:10px; background:rgba(2,6,23,0.5); border-radius:8px; font-size: 0.75rem;"></div>
+            </div>
+            <div class="neu-card">
+                <h4 style="margin-top:0; font-size: 0.9rem; color:var(--success);"><i class="fas fa-search"></i> القاموس</h4>
+                <input type="text" id="dict-search" class="inset-input" placeholder="ابحث.." oninput="searchDict()">
+                <div id="dict-results" style="max-height: 150px; overflow-y: auto; font-size: 0.75rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="p-skills" class="page">
+        <div class="neu-card" style="background:linear-gradient(135deg, var(--accent), #0ea5e9); color:#000; border:none;">
+            <h3 style="margin:0; font-size:1.1rem;">تحصيلك العملي</h3>
+            <div style="font-size:1.8rem; font-weight:800;" id="skill-pct">0%</div>
+            <div style="width:100%; height:8px; background:rgba(0,0,0,0.1); border-radius:10px; margin-top:10px; overflow:hidden;">
+                <div id="skill-bar" style="width:0%; height:100%; background:#fff; transition:0.8s;"></div>
+            </div>
+        </div>
+        <div id="skills-list" style="margin-top:15px;"></div>
+    </div>
+
+    <div id="p-links" class="page">
+        <div class="neu-card">
+            <h4 style="color:var(--accent); margin-bottom:15px;">🔗 روابط مهمة</h4>
+            <div style="display:grid; gap:10px;">
+                <a href="https://t.me/+qlol3SKFZpk0ZDli" target="_blank" class="menu-item" style="text-decoration:none;"><i class="fab fa-telegram"></i> قناة الدفعة الرسمية</a>
+                <a href="https://t.me/+5gRfqqpnkzwzODJi" target="_blank" class="menu-item" style="text-decoration:none;"><i class="fab fa-telegram"></i> جروب الأحياء</a>
+                <a href="https://t.me/alialakbar2005" target="_blank" class="menu-item" style="text-decoration:none;"><i class="fab fa-telegram"></i> قناة الملفات</a>
+            </div>
+        </div>
+        <div class="neu-card" style="margin-top:15px;">
+            <h4 style="margin-bottom:15px;">👤 الإدارة والدعم</h4>
+            <div style="display:grid; gap:10px;">
+                <a href="https://t.me/ms0oll" target="_blank" class="menu-item" style="text-decoration:none;"><i class="fab fa-telegram"></i> المطور: مصطفى جبار</a>
+                <a href="https://t.me/txt7l" target="_blank" class="menu-item" style="text-decoration:none;"><i class="fab fa-telegram"></i> الممثل: مجتبى مالك</a>
+            </div>
+        </div>
+    </div>
+
     <div id="p-abbrev" class="page">
         <div class="neu-card" style="padding: 10px; overflow-x: auto; border-top: 4px solid var(--accent);">
             <h3 style="text-align:center; color:var(--accent); margin-bottom:15px;">
                 <i class="fas fa-file-medical-alt"></i> قاموس الاختصارات الطبية
             </h3>
-            <table class="medical-table">
+            <table class="medical-table" style="width:100%; border-collapse:collapse;">
                 <thead>
-                    <tr>
-                        <th>المختصر</th>
-                        <th>الكلمة كاملة</th>
-                        <th>المعنى بالعربي</th>
+                    <tr style="background:rgba(56, 189, 248, 0.1);">
+                        <th style="padding:10px; text-align:right;">المختصر</th>
+                        <th style="padding:10px; text-align:right;">الكلمة كاملة</th>
+                        <th style="padding:10px; text-align:right;">المعنى بالعربي</th>
                     </tr>
                 </thead>
                 <tbody id="abbrev-table-body">
-                    </tbody>
+                </tbody>
             </table>
         </div>
 
@@ -200,51 +224,53 @@
                 <i class="fas fa-microchip"></i> الرموز الرياضية الطبية
             </h3>
             <div id="symbols-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="p-admin" class="page">
+        <div class="neu-card">
+            <h3>إدارة المحتوى (Admin)</h3>
+            <select id="adm-choice" class="inset-input" onchange="buildAdminForm()">
+                <option value="ads">إضافة تبليغ</option>
+                <option value="schedule">إضافة للجدول</option>
+                <option value="lectures">إضافة للمكتبة</option>
+                <option value="quiz">إضافة كويز</option>
+                <option value="study_admin">طلبات Study Buddy</option>
+            </select>
+            <div id="adm-inputs"></div>
+            <button id="adm-publish-btn" class="btn-main" onclick="firePublish()">نشر</button>
         </div>
     </div>
 
 
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="nav('p-home')">
+            <i class="fas fa-home fa-lg"></i>
+            <div>الرئيسية</div>
+        </div>
 
-<div id="p-admin" class="page">
-    <div class="neu-card">
-        <h3>إدارة المحتوى (Admin)</h3>
-        <select id="adm-choice" class="inset-input" onchange="buildAdminForm()">
-            <option value="ads">إضافة تبليغ</option>
-            <option value="schedule">إضافة للجدول</option>
-            <option value="lectures">إضافة للمكتبة</option>
-            <option value="quiz">إضافة كويز</option>
-            <option value="study_admin">طلبات Study Buddy</option>
-        </select>
-        <div id="adm-inputs"></div>
-        <button id="adm-publish-btn" class="btn-main" onclick="firePublish()">نشر</button>
-    </div>
-</div>
+        <div class="nav-item" onclick="nav('p-abbrev')">
+            <i class="fas fa-file-medical-alt fa-lg"></i>
+            <div>اختصارات</div>
+        </div>
 
-<nav class="bottom-nav">
-    <div class="nav-item active" onclick="nav('p-home')">
-        <i class="fas fa-home fa-lg"></i>
-        <div>الرئيسية</div>
-    </div>
+        <div class="nav-item" onclick="nav('p-study')">
+            <i class="fas fa-user-friends fa-lg" style="color:#8b5cf6;"></i>
+            <div>Study</div>
+        </div>
 
-    <div class="nav-item" onclick="nav('p-abbrev')">
-        <i class="fas fa-file-medical-alt fa-lg"></i>
-        <div>اختصارات</div>
-    </div>
+        <div class="nav-item" onclick="nav('p-tools')">
+            <i class="fas fa-briefcase-medical fa-lg"></i>
+            <div>الأدوات</div>
+        </div>
 
-    <div class="nav-item" onclick="nav('p-study')">
-        <i class="fas fa-user-friends fa-lg" style="color:#8b5cf6;"></i>
-        <div>Study</div>
-    </div>
+        <div class="nav-item" onclick="nav('p-skills')">
+            <i class="fas fa-tasks fa-lg"></i>
+            <div>مهاراتي</div>
+        </div>
+    </nav>
 
-    <div class="nav-item" onclick="nav('p-tools')">
-        <i class="fas fa-briefcase-medical fa-lg"></i>
-        <div>الأدوات</div>
-    </div>
-
-    <div class="nav-item" onclick="nav('p-skills')">
-        <i class="fas fa-tasks fa-lg"></i>
-        <div>مهاراتي</div>
-    </div>
-</nav>
-<script src="script.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

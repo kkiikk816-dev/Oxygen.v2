@@ -16,25 +16,22 @@ async function checkSession() {
     }
 }
 
+// استبدل الدالة القديمة بهذا الشكل المبسط:
 async function verifyUserRole(user) {
-    // فحص هل المستخدم أدمن؟
-    const { data: admin } = await sb.from('admin_list').select('email').eq('email', user.email).maybeSingle();
+    const { data: admin } = await sb
+        .from('admin_list')
+        .select('email')
+        .eq('email', user.email)
+        .maybeSingle();
 
-    if (admin) {
-        currentUserRole = 'admin';
-        document.getElementById('adm-btn').style.display = 'flex'; // إظهار زر الأدمن
-    } else {
-        currentUserRole = 'student';
-        document.getElementById('adm-btn').style.display = 'none';
-    }
-
-    // حفظ الرتبة للمرجعية السريعة (تجميلي فقط)
+    currentUserRole = admin ? 'admin' : 'student';
+    document.getElementById('adm-btn').style.display = currentUserRole === 'admin' ? 'flex' : 'none';
     localStorage.setItem('ox_role', currentUserRole);
 
-    // إخفاء شاشة الدخول وبدء التطبيق
     document.getElementById('auth-screen').style.display = 'none';
-    loadApp();
+    loadApp(); // الدخول للتطبيق مباشرة
 }
+
 
 function toggleAuthMode() {
     isLoginMode = !isLoginMode;
@@ -132,10 +129,38 @@ window.onload = () => {
 function nav(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+
+    // تصحيح تلوين أزرار الشريط السفلي
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    const navMap = {'p-home':0, 'p-study':1, 'p-tools':2, 'p-skills':3};
-    if(navMap[id] !== undefined) document.querySelectorAll('.nav-item')[navMap[id]].classList.add('active');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    if (id === 'p-home') navItems[0].classList.add('active');
+    else if (id === 'p-abbrev') navItems[1].classList.add('active');
+    else if (id === 'p-study') navItems[2].classList.add('active');
+    else if (id === 'p-tools') navItems[3].classList.add('active');
+    else if (id === 'p-skills') navItems[4].classList.add('active');
+
     toggleMenu(true);
+}
+
+// إضافة ميزة السحب لإغلاق القائمة
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.getElementById('side-menu').addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.getElementById('side-menu').addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    // إذا كان السحب لليمين (في واجهة RTL يعني إغلاق)
+    if (touchEndX - touchStartX > 50) {
+        toggleMenu(true);
+    }
 }
 
 function toggleMenu(close=false) {
@@ -168,65 +193,196 @@ async function loadApp() {
 }
 
 function renderData() {
+    // 1. عرض جدول المحاضرات الأسبوعي
     const days = ["الأحد", "الأثنين", "الثلاثاء", "الأربعاء", "الخميس"];
-    document.getElementById('sch-horizontal').innerHTML = days.map(day => {
-        const list = store.sch.filter(x => x.day === day);
-        return `<div class="day-card">
-            <h3 style="margin:0 0 15px; color:var(--accent); border-bottom:1px solid #334155;">${day}</h3>
-            ${list.length ? list.map(l => `<div style="margin-bottom:12px;"><b>${l.subject}</b><div style="font-size:0.8rem; opacity:0.7;">⏰ ${l.time} | 📍 ${l.hall}</div></div>`).join('') : '<div style="opacity:0.5;">لا توجد محاضرات</div>'}
-        </div>`;
-    }).join('');
+    const scheduleContainer = document.getElementById('sch-horizontal');
 
-    document.getElementById('ads-list').innerHTML = store.ads.map(ad => `
-        <div class="neu-card" style="border-right:3px solid var(--accent);">
-            ${ad.content}
-            <div style="font-size:0.6rem; opacity:0.5; margin-top:10px;">${new Date(ad.created_at).toLocaleString('ar-EG')}</div>
-            ${currentUserRole === 'admin' ? `<button onclick="delData('ads', ${ad.id})" style="color:var(--danger); background:none; border:none; margin-top:5px;">حذف</button>` : ''}
-        </div>`).join('');
+    if (scheduleContainer) {
+        scheduleContainer.innerHTML = days.map(day => {
+            const list = store.sch.filter(x => x.day === day);
+            return `
+                <div class="day-card">
+                    <h3 style="margin:0 0 15px; color:var(--accent); border-bottom:1px solid #334155;">${day}</h3>
+                    ${list.length ? list.map(l => `
+                        <div style="margin-bottom:12px;">
+                            <b>${l.subject}</b>
+                            <div style="font-size:0.8rem; opacity:0.7;">⏰ ${l.time} | 📍 ${l.hall}</div>
+                        </div>
+                    `).join('') : '<div style="opacity:0.5;">لا توجد محاضرات</div>'}
+                </div>`;
+        }).join('');
+    }
 
-    const cats = [...new Set(store.docs.map(x => x.subject_type || 'عام'))];
-    document.getElementById('lib-cats').innerHTML = cats.map(c => `<button class="badge" onclick="filterLib('${c}')" style="cursor:pointer; border:none; padding:8px 15px;">${c}</button>`).join('');
-    if(cats.length) filterLib(cats[0]);
-}
 
-function filterLib(c) {
-    const list = store.docs.filter(x => (x.subject_type || 'عام') === c);
-    document.getElementById('lib-files').innerHTML = list.map(f => `
-        <div class="neu-card" style="display:flex; justify-content:space-between; align-items:center;">
-            <b>${f.title}</b>
-            <div>
-                <a href="${f.link}" target="_blank" style="color:var(--accent); margin-left:10px;"><i class="fas fa-download"></i></a>
-                ${currentUserRole === 'admin' ? `<button onclick="delData('lectures', ${f.id})" style="color:var(--danger); background:none; border:none;"><i class="fas fa-trash"></i></button>` : ''}
+    // 2. عرض التبليغات والتعميمات (تم تصحيحها وحذف كود الـ CSS المتداخل)
+    const adsContainer = document.getElementById('ads-list');
+    if (adsContainer) {
+        adsContainer.innerHTML = store.ads.map(ad => `
+            <div class="neu-card">
+                <div style="white-space: pre-wrap; line-height: 1.6;">${ad.content}</div>
+                <div style="font-size:0.6rem; opacity:0.5; margin-top:10px;">
+                    ${new Date(ad.created_at).toLocaleString('ar-EG')}
+                </div>
+                ${currentUserRole === 'admin' ? `
+                    <button onclick="delData('ads', ${ad.id})" 
+                            style="color:var(--danger); background:none; border:none; margin-top:10px; cursor:pointer; font-family: 'Cairo';">
+                        <i class="fas fa-trash"></i> حذف التبليغ
+                    </button>
+                ` : ''}
             </div>
-        </div>`).join('');
+        `).join('');
+    }
+
+    // 3. إعداد تصنيفات المكتبة
+    const libCatsContainer = document.getElementById('lib-cats');
+    if (libCatsContainer) {
+        const cats = [...new Set(store.docs.map(x => x.subject_type || 'عام'))];
+        libCatsContainer.innerHTML = cats.map(c => `
+            <button class="badge" onclick="filterLib('${c}')" 
+                    style="cursor:pointer; border:none; padding:8px 15px; font-family: 'Cairo';">
+                ${c}
+            </button>
+        `).join('');
+
+        // عرض أول تصنيف تلقائياً عند التحميل
+        if (cats.length) filterLib(cats[0]);
+    }
 }
 
-// --- Study Buddy ---
+// دالة تصفية وعرض ملفات المكتبة
+function filterLib(category) {
+    const libFilesContainer = document.getElementById('lib-files');
+    if (!libFilesContainer) return;
+
+    const list = store.docs.filter(x => (x.subject_type || 'عام') === category);
+
+    if (list.length === 0) {
+        libFilesContainer.innerHTML = '<p style="text-align:center; opacity:0.5;">لا توجد ملفات في هذا القسم</p>';
+        return;
+    }
+
+    libFilesContainer.innerHTML = list.map(f => `
+        <div class="neu-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <b style="display:block;">${f.title}</b>
+                <span style="font-size:0.7rem; opacity:0.6;">${category}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <a href="${f.link}" target="_blank" style="color:var(--accent); font-size:1.2rem;">
+                    <i class="fas fa-file-download"></i>
+                </a>
+                ${currentUserRole === 'admin' ? `
+                    <button onclick="delData('lectures', ${f.id})" 
+                            style="color:var(--danger); background:none; border:none; cursor:pointer; font-size:1rem;">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- Study Buddy (نسخة بدون بروفايل) ---
+
 async function submitStudyRequest() {
+    // جلب القيم من الحقول (تأكد من إضافة حقول الاسم والتليجرام في الـ HTML كما سأوضح بالأسفل)
+    const fullName = document.getElementById('st-name').value.trim();
+    const telegram = document.getElementById('st-tele').value.trim();
+    const subject = document.getElementById('st-subject').value.trim();
+    const gender = document.getElementById('st-gender').value;
+    const details = document.getElementById('st-details').value.trim();
+
+    // التحقق من البيانات الأساسية
+    if (!fullName || !telegram || !subject) {
+        alert("يرجى كتابة الاسم، المعرف، والمادة");
+        return;
+    }
+
+    if (!telegram.startsWith("@")) {
+        alert("يجب أن يبدأ معرف التليجرام بـ @");
+        return;
+    }
+
+    // 1️⃣ جلب المستخدم الحالي (للتوثيق فقط)
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+        alert("يجب تسجيل الدخول أولاً");
+        return;
+    }
+
+    // 2️⃣ إنشاء الطلب (إرسال البيانات مباشرة للجدول)
     const p = {
-        subject: document.getElementById('st-subject').value,
-        gender: document.getElementById('st-gender').value,
-        tele_user: document.getElementById('st-tele').value,
-        details: document.getElementById('st-details').value,
-        is_approved: false
+        user_id: user.id,
+        full_name: fullName,  // نرسل الاسم الذي كتبه المستخدم الآن
+        tele_user: telegram,  // نرسل التليجرام الذي كتبه المستخدم الآن
+        subject: subject,
+        gender: gender,
+        details: details,
+        is_approved: false    // ينتظر موافقة الأدمن
     };
-    if(!p.subject || !p.tele_user) return alert("البيانات ناقصة");
+
     const { error } = await sb.from('study_requests').insert([p]);
-    if(error) alert("خطأ!"); else { alert("تم الإرسال للمراجعة ✅"); toggleBox('study-form-box'); }
+
+    if (error) {
+        console.error(error);
+        alert("حدث خطأ أثناء الإرسال: " + error.message);
+        return;
+    }
+
+    alert("تم إرسال طلبك بنجاح ✅.. سيظهر للجميع بعد مراجعة الأدمن.");
+
+    // تنظيف الحقول
+    document.getElementById('st-name').value = "";
+    document.getElementById('st-tele').value = "";
+    document.getElementById('st-subject').value = "";
+    document.getElementById('st-details').value = "";
+
+    toggleBox('study-form-box');
 }
 
 async function loadStudyRequests() {
-    const { data } = await sb.from('study_requests').select('*').eq('is_approved', true).order('created_at', {ascending: false});
+    // قمنا بإزالة الربط (join) مع جدول profiles لأنه لم يعد موجوداً
+    const { data } = await sb
+        .from('study_requests')
+        .select('*') 
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
+
     const container = document.getElementById('study-list-container');
-    if(data && data.length) {
-        container.innerHTML = data.map(req => `
-            <div class="neu-card" style="border-right: 4px solid #8b5cf6;">
-                <div style="display:flex; justify-content:space-between;"><b style="color:#8b5cf6;">${req.subject}</b><span class="badge">${req.gender}</span></div>
-                <p style="font-size:0.9rem;">${req.details}</p>
-                <button class="btn-main" style="background:#334155; color:white; font-size:0.8rem;" onclick="offerHelp(${req.id})">مساعدة 🙋‍♂️</button>
-            </div>`).join('');
-    } else { container.innerHTML = '<p style="text-align:center; opacity:0.5;">لا توجد طلبات حالياً</p>'; }
+
+    if (!data || !data.length) {
+        container.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px;">لا توجد طلبات متوفرة حالياً</p>';
+        return;
+    }
+
+    container.innerHTML = data.map(req => `
+        <div class="neu-card" style="border-right: 4px solid #8b5cf6; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b style="color:#8b5cf6; font-size:1rem;">
+                    <i class="fas fa-user-grad" style="margin-left:5px;"></i>
+                    ${req.full_name} 
+                </b>
+                <span class="badge" style="background:rgba(139, 92, 246, 0.2); color:#a78bfa;">${req.gender}</span>
+            </div>
+            <div style="margin-top:8px; font-weight:700; color:var(--accent);">المادة: ${req.subject}</div>
+            <p style="font-size:0.85rem; color:#cbd5e1; margin: 8px 0;">${req.details || "لا توجد تفاصيل إضافية"}</p>
+
+            <button class="btn-main" 
+                    style="background:#334155; color:white; font-size:0.8rem; width:100%; margin-top:10px; height:35px;" 
+                    onclick="offerHelp('${req.tele_user}')">
+                <i class="fab fa-telegram" style="margin-left:5px;"></i>
+                مراسلة المساعدة
+            </button>
+        </div>
+    `).join('');
 }
+
+// دالة المساعدة المحدثة لتفتح تليجرام الشخص مباشرة
+function offerHelp(teleHandle) {
+    const cleanHandle = teleHandle.replace('@', '');
+    window.open(`https://t.me/${cleanHandle}`, '_blank');
+}
+
 
 async function offerHelp(reqId) {
     const helper = prompt("يوزرك للتواصل:");
@@ -305,67 +461,137 @@ function searchDict() {
 }
 
 // --- Admin ---
+        // تعديل دالة بناء الفورم لضمان فراغ الحقول عند كل فتح
 async function buildAdminForm() {
     const t = document.getElementById('adm-choice').value;
     const area = document.getElementById('adm-inputs');
     const pubBtn = document.getElementById('adm-publish-btn');
+
+    // إظهار زر النشر افتراضياً وإخفاؤه فقط في قسم الـ Study
     pubBtn.style.display = 'block';
+    area.innerHTML = `<p style="text-align:center; opacity:0.5;">جاري التحميل...</p>`; 
 
-    if(t === 'ads') area.innerHTML = `<textarea id="f-ad" class="inset-input" placeholder="النص..."></textarea>`;
-    else if(t === 'schedule') area.innerHTML = `<select id="f-day" class="inset-input"><option>الأحد</option><option>الأثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option></select><input id="f-sub" class="inset-input" placeholder="مادة"><input id="f-time" class="inset-input" placeholder="وقت"><input id="f-hall" class="inset-input" placeholder="قاعة">`;
-    else if(t === 'lectures') area.innerHTML = `<input id="f-type" class="inset-input" placeholder="نوع"><input id="f-title" class="inset-input" placeholder="عنوان"><input id="f-link" class="inset-input" placeholder="رابط">`;
-    else if(t === 'quiz') area.innerHTML = `<input id="q-quest" class="inset-input" placeholder="سؤال"><input id="q-a" class="inset-input" placeholder="A"><input id="q-b" class="inset-input" placeholder="B"><input id="q-c" class="inset-input" placeholder="C"><select id="q-correct" class="inset-input"><option value="a">A</option><option value="b">B</option><option value="c">C</option></select><textarea id="q-expl" class="inset-input" placeholder="شرح"></textarea>`;
-
-    // --- التعديل الجديد والمطلوب لـ Study Buddy ---
-    else if(t === 'study_admin') {
-        pubBtn.style.display = 'none';
-        const { data: pending } = await sb.from('study_requests').select('*').eq('is_approved', false);
-        const { data: offers } = await sb.from('study_offers').select('*, study_requests(subject, gender, tele_user, details)');
-
+    if (t === 'ads') {
+        area.innerHTML = `<textarea id="f-ad" class="inset-input" style="height:150px;" placeholder="اكتب نص التبليغ هنا..."></textarea>`;
+        // تفريغ إضافي للتأكد من عدم وجود نص قديم
+        document.getElementById('f-ad').value = "";
+    } 
+    else if (t === 'schedule') {
         area.innerHTML = `
-            <h4 style="color:var(--gold); margin-bottom: 10px;">📥 طلبات قيد الانتظار:</h4>
-            ${pending?.length ? pending.map(p => `
-                <div class="neu-card" style="border-right:3px solid var(--gold); font-size:0.9rem;">
-                    <b>المادة: ${p.subject}</b> <br>
-                    <span style="opacity:0.8;">المستخدم: @${p.tele_user}</span>
-                    <button class="badge" style="display:block; margin-top:10px; border:none; background:var(--success); color:white; cursor:pointer;" onclick="approveStudy(${p.id})">موافقة ✅</button>
-                </div>
-            `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد طلبات جديدة</p>'}
+            <select id="f-day" class="inset-input"><option>الأحد</option><option>الأثنين</option><option>الثلاثاء</option><option>الأربعاء</option><option>الخميس</option></select>
+            <input id="f-sub" class="inset-input" placeholder="اسم المادة">
+            <input id="f-time" class="inset-input" placeholder="الوقت (مثلاً 8:30 ص)">
+            <input id="f-hall" class="inset-input" placeholder="القاعة">`;
+    } 
+    else if (t === 'lectures') {
+        area.innerHTML = `
+            <input id="f-type" class="inset-input" placeholder="النوع (مثلاً: ملزمة)">
+            <input id="f-title" class="inset-input" placeholder="عنوان المحاضرة">
+            <input id="f-link" class="inset-input" placeholder="رابط الملف (Drive/Telegram)">`;
+    } 
+    else if (t === 'quiz') {
+        area.innerHTML = `
+            <input id="q-quest" class="inset-input" placeholder="السؤال">
+            <input id="q-a" class="inset-input" placeholder="خيار A">
+            <input id="q-b" class="inset-input" placeholder="خيار B">
+            <input id="q-c" class="inset-input" placeholder="خيار C">
+            <select id="q-correct" class="inset-input"><option value="a">A</option><option value="b">B</option><option value="c">C</option></select>
+            <textarea id="q-expl" class="inset-input" placeholder="شرح الإجابة الصحيحة"></textarea>`;
+    } 
+    else if (t === 'study_admin') {
+        pubBtn.style.display = 'none'; // لا نحتاج زر النشر هنا لأننا ندير طلبات موجودة
 
-            <h4 style="color:var(--accent); margin-top:20px; margin-bottom: 10px;">🤝 عروض المساعدة المكتملة:</h4>
-            ${offers?.length ? offers.map(o => `
-                <div class="neu-card" style="border-right:3px solid var(--accent); background: rgba(56, 189, 248, 0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <b style="color:var(--accent)">تفاصيل المساعدة:</b>
-                        <span class="badge">${o.study_requests?.gender || 'غير محدد'}</span>
+        try {
+            const { data: pending } = await sb.from('study_requests').select('*').eq('is_approved', false);
+            const { data: offers } = await sb.from('study_offers').select('*, study_requests(subject, gender, tele_user, details)');
+
+            area.innerHTML = `
+                <h4 style="color:var(--gold); margin-bottom: 10px;">📥 طلبات قيد الانتظار:</h4>
+                ${pending?.length ? pending.map(p => `
+                    <div class="neu-card" style="border-right:3px solid var(--gold); font-size:0.9rem; margin-bottom:10px;">
+                        <b>📚 المادة: ${p.subject}</b> <br>
+                        <span style="opacity:0.8;">المستخدم: @${p.tele_user}</span>
+                        <button class="btn-main" style="padding:5px; margin-top:10px; background:var(--success); color:white;" onclick="approveStudy(${p.id})">موافقة ✅</button>
                     </div>
-                    <div style="margin-top:10px; font-size:0.9rem; line-height:1.6;">
-                        <div><strong>📚 المادة:</strong> ${o.study_requests?.subject}</div>
-                        <div><strong>📝 التفاصيل:</strong> ${o.study_requests?.details}</div>
-                        <hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">
-                        <div style="display:flex; flex-direction:column; gap:5px;">
-                            <div style="color:var(--gold)"><strong>👤 صاحب الطلب:</strong> @${o.study_requests?.tele_user}</div>
-                            <div style="color:var(--success)"><strong>🙋‍♂️ مقدم المساعدة:</strong> @${o.helper_tele}</div>
+                `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد طلبات جديدة</p>'}
+
+                <h4 style="color:var(--accent); margin-top:20px; margin-bottom: 10px;">🤝 عروض المساعدة المكتملة:</h4>
+                ${offers?.length ? offers.map(o => `
+                    <div class="neu-card" style="border-right:3px solid var(--accent); background: rgba(56, 189, 248, 0.05); margin-bottom:10px;">
+                        <div style="font-size:0.85rem; line-height:1.6;">
+                            <div><strong>المادة:</strong> ${o.study_requests?.subject}</div>
+                            <div style="color:var(--gold)"><strong>صاحب الطلب:</strong> @${o.study_requests?.tele_user}</div>
+                            <div style="color:var(--success)"><strong>المساعد:</strong> @${o.helper_tele}</div>
                         </div>
+                        <button class="btn-main" style="margin-top:10px; background:var(--danger); color:white; padding:5px;" onclick="delData('study_offers', ${o.id})">حذف العرض 🗑️</button>
                     </div>
-                    <button class="badge" style="margin-top:12px; border:none; background:var(--danger); color:white; width:100%; cursor:pointer; padding:8px;" onclick="delData('study_offers', ${o.id})">حذف العرض 🗑️</button>
-                </div>
-            `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد عروض مساعدة حالياً</p>'}
-        `;
+                `).join('') : '<p style="opacity:0.5; font-size:0.8rem;">لا توجد عروض حالياً</p>'}
+            `;
+        } catch (err) {
+            area.innerHTML = "حدث خطأ أثناء جلب بيانات الـ Study Buddy";
+        }
+    }
+}
+async function firePublish() {
+    const t = document.getElementById('adm-choice').value;
+    const btn = document.getElementById('adm-publish-btn');
+    let p = {};
+
+    // تجميع البيانات بناءً على الاختيار
+    if (t === 'ads') {
+        const content = document.getElementById('f-ad').value;
+        if (!content || content.trim() === "") return alert("يرجى كتابة نص التبليغ!");
+        p = { content: content };
+    } 
+    else if (t === 'schedule') {
+        p = { 
+            day: document.getElementById('f-day').value, 
+            subject: document.getElementById('f-sub').value, 
+            time: document.getElementById('f-time').value, 
+            hall: document.getElementById('f-hall').value 
+        };
+    } 
+    else if (t === 'lectures') {
+        p = { 
+            subject_type: document.getElementById('f-type').value, 
+            title: document.getElementById('f-title').value, 
+            link: document.getElementById('f-link').value 
+        };
+    } 
+    else if (t === 'quiz') {
+        p = { 
+            question: document.getElementById('q-quest').value, 
+            option_a: document.getElementById('q-a').value, 
+            option_b: document.getElementById('q-b').value, 
+            option_c: document.getElementById('q-c').value, 
+            correct_option: document.getElementById('q-correct').value, 
+            explanation: document.getElementById('q-expl').value 
+        };
+    }
+
+    // تعطيل الزر
+    btn.disabled = true;
+    btn.innerText = "جاري النشر...";
+
+    try {
+        const { error } = await sb.from(t === 'quiz' ? 'daily_quiz' : t).insert([p]);
+        if (error) throw error;
+
+        alert('تم النشر بنجاح! ✅');
+
+        // تفريغ المنطقة تماماً وإعادة بنائها لمنع بقاء أي نصوص قديمة
+        await buildAdminForm(); 
+
+        await loadApp();
+        nav('p-home');
+    } catch (err) {
+        alert("فشل النشر: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "نشر";
     }
 }
 
-async function firePublish() {
-    const t = document.getElementById('adm-choice').value;
-    let p = {};
-    if(t === 'ads') p = { content: document.getElementById('f-ad').value };
-    else if(t === 'schedule') p = { day: document.getElementById('f-day').value, subject: document.getElementById('f-sub').value, time: document.getElementById('f-time').value, hall: document.getElementById('f-hall').value };
-    else if(t === 'lectures') p = { subject_type: document.getElementById('f-type').value, title: document.getElementById('f-title').value, link: document.getElementById('f-link').value };
-    else if(t === 'quiz') p = { question: document.getElementById('q-quest').value, option_a: document.getElementById('q-a').value, option_b: document.getElementById('q-b').value, option_c: document.getElementById('q-c').value, correct_option: document.getElementById('q-correct').value, explanation: document.getElementById('q-expl').value };
-
-    const { error } = await sb.from(t === 'quiz' ? 'daily_quiz' : t).insert([p]);
-    if(error) alert(error.message); else { alert('تم!'); loadApp(); nav('p-home'); }
-}
 
 async function delData(t, id) {
     if(confirm('حذف؟')) { await sb.from(t).delete().eq('id', id); loadApp(); }
@@ -459,11 +685,54 @@ function loadMedicalAbbrev() {
     }
 }
 
+async function saveProfile() {
+
+    const { data: { user } } = await sb.auth.getUser();
+
+    const full_name = document.getElementById('profile-name').value.trim();
+    const gender = document.getElementById('profile-gender').value;
+    const telegram = document.getElementById('profile-telegram').value.trim();
+    const study_group = document.getElementById('profile-group').value.trim();
+    const stage = document.getElementById('profile-stage').value.trim();
+
+    if (!full_name || !gender || !telegram || !study_group || !stage) {
+        alert("كل الحقول مطلوبة");
+        return;
+    }
+
+    if (!telegram.startsWith("@")) {
+        alert("يجب كتابة يوزر التليجرام مع @");
+        return;
+    }
+
+    const avatar =
+        gender === 'ذكر'
+            ? 'https://i.ibb.co/Z665dQ53/IMG-2394.jpg'
+            : 'https://i.ibb.co/hJsMyjRK/IMG-2395.jpg';
+    const { error } = await sb.from('profiles').upsert([{
+        id: user.id,
+        full_name,
+        gender,
+        telegram,
+        study_group,
+        stage,
+        avatar
+    }]);
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    alert("تم حفظ الملف بنجاح ✅");
+    loadApp();
+}
+
 // 4. ربط الدالة بفتح الصفحة (تأكد من تعديل دالة nav الأصلية)
 const oldNav = nav;
 nav = function(pageId) {
     oldNav(pageId);
     if(pageId === 'p-abbrev') {
         loadMedicalAbbrev();
-    }
+     }
 };

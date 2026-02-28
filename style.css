@@ -1,139 +1,170 @@
 :root {
-  --bg: #0f172a; --card-bg: #1e293b; --accent: #38bdf8; --txt: #f1f5f9;
-  --danger: #ef4444; --success: #22c55e; --border: #334155; --gold: #fbbf24;
+  /* ألوان أساسية */
+  --bg: #0f172a; 
+  /* خلفية زجاجية شفافة للبطاقات */
+  --card-bg: rgba(30, 41, 59, 0.4); 
+  --accent: #38bdf8; 
+  --txt: #f1f5f9;
+  --danger: #ef4444; 
+  --success: #22c55e; 
+  /* حدود شفافة للزجاج */
+  --border: rgba(255, 255, 255, 0.1); 
+  --gold: #fbbf24;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
 body {
-  margin: 0; font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--txt);
-  overflow-x: hidden; padding-bottom: 80px; user-select: none; /* تقليل مساحة الأسفل قليلاً */
+  margin: 0; 
+  font-family: 'Cairo', sans-serif; 
+  /* خلفية متدرجة لكي يبرز تأثير الزجاج بقوة */
+  background: linear-gradient(135deg, #0f172a 0%, #172554 100%);
+  background-attachment: fixed;
+  color: var(--txt);
+  overflow-x: hidden; 
+  padding-bottom: 80px; 
+  user-select: none; 
 }
 
 /* --- شاشة الدخول --- */
 #auth-screen {
-  position: fixed; inset: 0; background: var(--bg);
+  position: fixed; inset: 0; 
+  background: linear-gradient(135deg, #0f172a 0%, #172554 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   z-index: 9999; padding: 20px; text-align: center;
 }
 .auth-logo { 
-  width: 85px; height: 85px; /* تم تصغير اللوجو من 100 إلى 85 */
+  width: 85px; height: 85px; 
   border-radius: 20px; margin-bottom: 15px; 
-  box-shadow: 0 0 30px rgba(56, 189, 248, 0.4); border: 2px solid var(--accent); 
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.4); 
+  border: 2px solid var(--accent); 
 }
 .auth-input {
   width: 100%; max-width: 350px; 
-  padding: 12px; /* تم تقليل الـ padding من 14 إلى 12 */
-  margin-bottom: 10px;
-  background: rgba(30, 41, 59, 0.6); border: 1px solid var(--border);
+  padding: 12px; margin-bottom: 10px;
+  background: rgba(15, 23, 42, 0.6); 
+  border: 1px solid var(--border);
   border-radius: 10px; color: white; font-family: inherit; font-size: 0.95rem;
   transition: 0.3s;
 }
-.auth-input:focus { border-color: var(--accent); background: rgba(30, 41, 59, 1); }
+.auth-input:focus { border-color: var(--accent); background: rgba(15, 23, 42, 0.9); }
 
 .btn-auth {
-  width: 100%; max-width: 350px; 
-  padding: 12px; /* تقليل حجم الزر */
-  border-radius: 10px; border: none;
-  font-weight: 800; cursor: pointer; transition: 0.3s; font-size: 0.95rem;
-  margin-bottom: 8px;
+  width: 100%; max-width: 350px; padding: 12px; 
+  border-radius: 10px; border: none; font-weight: 800; 
+  cursor: pointer; transition: 0.3s; font-size: 0.95rem; margin-bottom: 8px;
 }
-.btn-primary { background: var(--accent); color: #000; }
+.btn-primary { background: var(--accent); color: #000; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); }
+.btn-primary:active { transform: scale(0.97); }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: #94a3b8; }
 
 .status-msg { margin-top: 10px; font-size: 0.85rem; padding: 8px; border-radius: 8px; display: none; width: 100%; max-width: 350px; }
 .error-msg { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
 .success-msg { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
 
-/* --- باقي التطبيق --- */
+/* --- الشريط العلوي والقائمة الجانبية --- */
 .app-bar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 15px; /* تم التصغير */
-  position: sticky; top: 0; background: rgba(15,23,42,0.95);
-  backdrop-filter: blur(12px); z-index: 1000; border-bottom: 1px solid var(--border);
+  padding: 12px 15px; 
+  position: sticky; top: 0; 
+  background: rgba(15, 23, 42, 0.75); 
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  z-index: 1000; border-bottom: 1px solid var(--border);
 }
+
+/* حل مشكلة القائمة (أصبحت معتمة وتغطي ما خلفها) */
 .side-menu {
-  position: fixed; top: 0; right: -100%; width: 260px; height: 100%;
-  background: var(--card-bg); z-index: 3000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -10px 0 30px rgba(0,0,0,0.5); padding: 20px; display: flex; flex-direction: column;
+  position: fixed; top: 0; right: -100%; width: 280px; height: 100%;
+  background: #0f172a; /* لون صلب معتم تماماً */
+  z-index: 4000; transition: 0.4s ease-in-out;
+  box-shadow: -15px 0 50px rgba(0,0,0,0.9); 
+  padding: 25px; display: flex; flex-direction: column;
+  border-left: 1px solid var(--accent);
 }
 .side-menu.open { right: 0; }
 .menu-item { 
-  padding: 12px; margin-bottom: 8px; border-radius: 10px; background: #0f172a; 
+  padding: 12px; margin-bottom: 8px; border-radius: 10px; 
+  background: rgba(255, 255, 255, 0.03); 
   border: 1px solid var(--border); color: #fff; cursor: pointer; display: flex; align-items: center; gap: 10px;
-  font-size: 0.95rem; /* تصغير خط القائمة */
+  font-size: 0.95rem; transition: 0.2s;
 }
+.menu-item:active { background: rgba(255, 255, 255, 0.1); }
 
-.page { display: none; padding: 12px; animation: slideUp 0.4s ease; } /* تقليل حواف الصفحة */
+/* --- إعدادات الصفحات والبطاقات الزجاجية --- */
+.page { display: none; padding: 12px; animation: slideUp 0.4s ease; } 
 .page.active { display: block; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+/* التصميم الزجاجي الموحد للبطاقات */
 .neu-card { 
-  background: var(--card-bg); border-radius: 15px; /* تقليل الانحناء */
-  padding: 15px; /* تقليل الحجم الداخلي للبطاقة */
-  margin-bottom: 12px; border: 1px solid var(--border); 
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+  background: var(--card-bg); 
+  backdrop-filter: blur(16px); 
+  -webkit-backdrop-filter: blur(16px); 
+  border-radius: 20px; 
+  padding: 15px; 
+  margin-bottom: 15px; 
+  border: 1px solid var(--border); 
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); 
 }
 
 .welcome-banner { 
-  background: linear-gradient(135deg, #0ea5e9, #2563eb); 
-  padding: 20px; /* تقليل مساحة البانر */
-  border-radius: 15px; color: white; margin-bottom: 15px; position: relative; overflow: hidden; 
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.8), rgba(37, 99, 235, 0.8)); 
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 20px; border-radius: 20px; color: white; margin-bottom: 15px; position: relative; overflow: hidden; 
+  border: 1px solid var(--border);
 }
 
 .horizontal-scroll { 
-  display: flex; overflow-x: auto; gap: 12px; padding: 5px 0 12px; 
-  scroll-snap-type: x mandatory; 
+  display: flex; overflow-x: auto; gap: 12px; padding: 5px 0 12px; scroll-snap-type: x mandatory; 
 }
 .day-card { 
-  min-width: 240px; /* تصغير عرض بطاقة الجدول */
-  scroll-snap-align: start; background: #1e293b; border-radius: 15px; 
-  padding: 15px; border: 1px solid var(--border); border-top: 5px solid var(--accent);
+  min-width: 240px; scroll-snap-align: start; 
+  background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 15px; padding: 15px; border: 1px solid var(--border); border-top: 5px solid var(--accent);
 }
 
+/* --- الحقول والأزرار --- */
 .inset-input { 
-  width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border); 
-  border-radius: 8px; color: #fff; margin-bottom: 10px; font-family: 'Cairo'; 
-  font-size: 0.95rem;
+  width: 100%; padding: 12px; 
+  background: rgba(15, 23, 42, 0.6); 
+  border: 1px solid var(--border); border-radius: 12px; color: #fff; margin-bottom: 10px; 
+  font-family: 'Cairo'; font-size: 0.95rem; transition: 0.3s ease;
 }
-.btn-main { 
-  width: 100%; padding: 12px; border-radius: 10px; border: none; 
-  background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-bottom: 5px; 
-  font-size: 0.95rem;
-}
+.inset-input:focus { border-color: var(--accent); background: rgba(15, 23, 42, 0.9); }
 
+.btn-main { 
+  width: 100%; padding: 12px; border-radius: 12px; border: none; 
+  background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-bottom: 5px; 
+  font-size: 0.95rem; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); transition: 0.3s ease;
+}
+.btn-main:active { transform: scale(0.97); }
+
+/* --- الشريط السفلي --- */
 .bottom-nav {
   position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
-  width: 94%; height: 65px; background: rgba(30,41,59,0.9); backdrop-filter: blur(15px);
+  width: 94%; height: 65px; 
+  background: rgba(30, 41, 59, 0.85); 
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border-radius: 20px; display: flex; justify-content: space-around; align-items: center;
-  border: 1px solid rgba(255,255,255,0.1); z-index: 2000;
+  border: 1px solid rgba(255, 255, 255, 0.15); z-index: 2000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.nav-item { color: #94a3b8; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }
+.nav-item { color: #94a3b8; font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; transition: 0.3s;}
 .nav-item.active { color: var(--accent); transform: translateY(-3px); }
 
 .badge { font-size: 0.6rem; padding: 3px 6px; border-radius: 5px; background: var(--accent); color: #000; font-weight: bold; }
 
-.medical-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  text-align: center;
+/* --- الجداول الطبية --- */
+.medical-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
+.medical-table th { background-color: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 12px 8px; border-radius: 5px; }
+.medical-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #fff; }
+.medical-table tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
+
+/* --- نظام الشبكة (Grid) لترتيب الواجهات مستقبلاً --- */
+.grid-2-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.medical-table th {
-  background-color: var(--accent);
-  color: #000;
-  padding: 12px 8px;
-  border-radius: 5px;
-}
-
-.medical-table td {
-  padding: 12px 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #fff;
-}
-
-/* لون مختلف لكل سطر لسهولة القراءة */
-.medical-table tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
-}
 
